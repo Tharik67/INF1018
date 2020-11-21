@@ -22,16 +22,26 @@ void *cria_func(void *f,DescParam params[], int n)
     
     unsigned char *newf = (unsigned char *)malloc(sizeof(unsigned char)*200);
 
-    //                          mov %edi, %r12d     mov %esi, %r8d      mov %edx, %r9d
-    unsigned char movl[][3] = {{0x41, 0x89, 0xfc}, {0x41, 0x89, 0xf0}, {0x41, 0x89, 0xd1}} ; 
+    //função movl                          
+    //unsigned char movl[2] = {0x41, 0x89} ; 
+    // unsigned char edi[3] = {0xfc, 0xf8, 0xf9} ; 
+    // unsigned char esi[3] = {0xf4, 0xf0, 0xf1} ; 
+    // unsigned char edx[3] = {0xd4, 0xd0, 0xd1} ;    
+    unsigned char reg[][3] = {{0xfc, 0xf8, 0xf9}, {0xf4, 0xf0, 0xf1}, {0xd4, 0xd0, 0xd1}} ; 
+
     //                        %r12d  %r8d  %r9d
     unsigned char regSave[] = {0xbc, 0xb8, 0xb9 }; 
+
     //                         %edi  %esi  %edx
     unsigned char regCall[] = {0xe7, 0xc6, 0xca}; 
+
+    //unsigned char regP[] = {0xbf, 0xbe, 0xba}; 
+
 
     int i;
     int j;
     int cont;
+    int aux;
     //START
     for(j=0; j<12; j++)
     {
@@ -44,20 +54,20 @@ void *cria_func(void *f,DescParam params[], int n)
     //edx ->  r9d
     for( j = 0 ; j < n ; j++){
         if(params[j].orig_val == PARAM){
-            for(cont =0; cont < 3 ; cont++){
-                newf[i] = movl[j][cont];
-                i++;
-                printf("%02X - ", movl[j][cont]);
-            }
-        }else if (params[j].orig_val == FIX)
-        {
-            printf("\nJ - %d\n", j);
+            //coloca o parametro no registrador certo para chamar a funcao
+            newf[i] = 0x41;
+            newf[i+1] = 0x89;
+            newf[i+2] = reg[cont][j];
+            i+=3;
+            cont++;
+        }
+        else if (params[j].orig_val == FIX){
             newf[i] = 0x41;
             newf[i+1] = regSave[j];
             i+=2;
             u.i = params[j].valor.v_int;
-            for(cont =0; cont < 4 ; cont++){
-                newf[i] = u.c[cont];
+            for(aux =0; aux < 4 ; aux++){
+                newf[i] = u.c[aux];
                 i++;
                 
             }
@@ -65,12 +75,11 @@ void *cria_func(void *f,DescParam params[], int n)
         }
         
     }
-    printf("\n");
     //move para os registradores de parametros para chamar a funcao;
     //r12-> rdi
     //r8 -> rsi  
     //r9 -> rdx 
-    for( j = 0 ; j < n ; j++){
+    for( j = 0 ; j < 3 ; j++){
         newf[i] = 0x44 ;
         newf[i+1] = 0x89 ;
         i+=2;
@@ -78,11 +87,12 @@ void *cria_func(void *f,DescParam params[], int n)
         i++;
     }    
     //chama a funcao f 
-    newf[i] = 0xe8; 
+    newf[i] = 0xe9; 
     i++;
     u.i = (int) ((unsigned long)f - (unsigned long)&newf[i+5]);
     for( j = 0 ; j < 4 ; j++){
-        newf[i] = u.c[j];
+        newf[i] = 0x00;
+        //u.c[j];
         i++;
     }
     
@@ -93,7 +103,7 @@ void *cria_func(void *f,DescParam params[], int n)
         i++;
     }
     //Print
-    for(j=0; j<40; j++)
+    for(j=0; j<41; j++)
     {
         printf("%02X - ", newf[j]);
     }
