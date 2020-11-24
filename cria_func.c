@@ -18,7 +18,7 @@ void *cria_func(void *f,DescParam params[], int n)
     unsigned char start[]={0x55, 0x48, 0x89, 0xe5};
     
     //mov -16(%rbp), %r12 //leave //ret
-    unsigned char end[]={0xc9, 0xc3 };
+    unsigned char end[]={0xc9, 0xc3};
     
     unsigned char *newf = (unsigned char *)malloc(sizeof(unsigned char)*200);
 
@@ -35,9 +35,8 @@ void *cria_func(void *f,DescParam params[], int n)
     //                         %edi  %esi  %edx
     unsigned char regCall[] = {0xd7, 0xc6, 0xca}; 
 
-    //unsigned char regP[] = {0xbf, 0xbe, 0xba}; 
 
-    int i;
+    int i = 0;
     int j;
     int cont;
     int aux;
@@ -67,8 +66,7 @@ void *cria_func(void *f,DescParam params[], int n)
             u.i = params[j].valor.v_int;
             for(aux =0; aux < 4 ; aux++){
                 newf[i] = u.c[aux];
-                i++;
-                
+                i++; 
             }
 
         }
@@ -85,13 +83,13 @@ void *cria_func(void *f,DescParam params[], int n)
         newf[i] = regCall[j];
         i++;
     }    
+
     //chama a funcao f 
     newf[i] = 0xe8; 
-    i++;
     u.i = (int) ((unsigned long)f - (unsigned long)&newf[i+5]);
+    i++;
     for( j = 0 ; j < 4 ; j++){
-        newf[i] = 0x00;
-        //u.c[j];
+        newf[i] = u.c[j];
         i++;
     }
     
@@ -101,6 +99,7 @@ void *cria_func(void *f,DescParam params[], int n)
         newf[i] = end[j];
         i++;
     }
+
     //Print
     for(j=0; j<41; j++)
     {
