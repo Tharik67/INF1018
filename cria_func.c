@@ -126,24 +126,7 @@ void *cria_func(void *f,DescParam params[], int n)
 			}
 			else
 			{
-				// esse eh o caso de um ponteiro para um ponteiro que amarra uma variavel
-				// faco movq $constante, (%r9 ou %r10 ou %r11)
-				newf[i++] = 0x49;
-				newf[i++] = regSave[j];
-				ptr_par = (unsigned long) params[j].valor.v_ptr;
-				newf[i++] = ptr_par & 0xff;
-				newf[i++] = (ptr_par >> 8) & 0xff;
-				newf[i++] = (ptr_par >> 16) & 0xff;
-				newf[i++] = (ptr_par >> 24) & 0xff;
-				newf[i++] = (ptr_par >> 32) & 0xff;
-				newf[i++] = (ptr_par >> 40) & 0xff;	
-				newf[i++] = (ptr_par >> 48) & 0xff;
-				newf[i++] = (ptr_par >> 56) & 0xff;
-
-				// e depois faco movq (%r9), %rdi (ou para o registrador da vez) 
-				newf[i++] = 0x49;
-				newf[i++] = 0x8b;
-				newf[i++] = saveD[j];
+				
 			}
         }
         
