@@ -4,6 +4,7 @@
 
 void libera_func (void* func) {
     free(func);
+    
 }
 
 
@@ -126,7 +127,22 @@ void *cria_func(void *f,DescParam params[], int n)
 			}
 			else
 			{
-				
+				newf[i] = 0x49;
+                newf[i+1] = regSave[j];
+                i+=2;
+
+                y.l = (unsigned long) params[j].valor.v_ptr;
+                for (aux = 0; aux<8; aux++){
+                    newf[i] = y.c[aux];
+                    i++;
+                }
+                
+                //mov (%r10), %r10d ou os outros registradores dependendo do n de parametro
+                newf[i] = 0x49;
+                newf[i+1] = 0x8b;
+                newf[i+2] = saveD[j];
+                i+=3;
+
 			}
         }
         
@@ -162,12 +178,6 @@ void *cria_func(void *f,DescParam params[], int n)
     {
         newf[i] = end[j];
         i++;
-    }
-
-    //Print
-    for(j=0; j<26; j++)
-    {
-        printf("%02X - ", newf[j]);
     }
     
     return newf;
