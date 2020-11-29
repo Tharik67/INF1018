@@ -19,6 +19,7 @@ void *cria_func(void *f,DescParam params[], int n)
         char c[8];
     }y;
 
+    unsigned long ptr_par;
 
     //pushq %rbp //movq  %rsp, %rbp 
     unsigned char start[]={0x55, 0x48, 0x89, 0xe5};
@@ -91,7 +92,8 @@ void *cria_func(void *f,DescParam params[], int n)
                     newf[i] = y.c[aux];
                     i++;
                 }
-
+                
+                //mov (%r10), %r10d ou os outros registradores dependendo do n de parametro
                 newf[i] = 0x45;
                 newf[i+1] = 0x8b;
                 newf[i+2] = saveD[j];
@@ -100,6 +102,51 @@ void *cria_func(void *f,DescParam params[], int n)
             }
         
         }
+        else if(params[j].tipo_val == PTR_PAR){
+            
+            if(params[j].orig_val == PARAM){
+                newf[i] = 0x49;
+                newf[i+1] = 0x89;
+                newf[i+2] = reg[cont][j];
+                i+=3;
+                cont++;
+            }
+            else if(params[j].orig_val == FIX)
+			{
+				
+                newf[i] = 0x49;
+                newf[i+1] = regSave[j];
+                i+=2;
+
+                y.l = (unsigned long) params[j].valor.v_ptr;
+                for (aux = 0; aux<8; aux++){
+                    newf[i] = y.c[aux];
+                    i++;
+                }
+			}
+			else
+			{
+				// esse eh o caso de um ponteiro para um ponteiro que amarra uma variavel
+				// faco movq $constante, (%r9 ou %r10 ou %r11)
+				newf[i++] = 0x49;
+				newf[i++] = regSave[j];
+				ptr_par = (unsigned long) params[j].valor.v_ptr;
+				newf[i++] = ptr_par & 0xff;
+				newf[i++] = (ptr_par >> 8) & 0xff;
+				newf[i++] = (ptr_par >> 16) & 0xff;
+				newf[i++] = (ptr_par >> 24) & 0xff;
+				newf[i++] = (ptr_par >> 32) & 0xff;
+				newf[i++] = (ptr_par >> 40) & 0xff;	
+				newf[i++] = (ptr_par >> 48) & 0xff;
+				newf[i++] = (ptr_par >> 56) & 0xff;
+
+				// e depois faco movq (%r9), %rdi (ou para o registrador da vez) 
+				newf[i++] = 0x49;
+				newf[i++] = 0x8b;
+				newf[i++] = saveD[j];
+			}
+        }
+        
     }
 
     //move para os registradores de parametros para chamar a funcao;
@@ -107,7 +154,11 @@ void *cria_func(void *f,DescParam params[], int n)
     //r8 -> rsi  
     //r9 -> rdx 
     for( j = 0 ; j < n ; j++){
-        newf[i] = 0x44 ;
+        if(params[j].tipo_val == INT_PAR)
+            newf[i] = 0x44 ;
+        else 
+            newf[i] = 0x4c ;
+
         newf[i+1] = 0x89 ;
         i+=2;
         newf[i] = regCall[j];
@@ -131,7 +182,7 @@ void *cria_func(void *f,DescParam params[], int n)
     }
 
     //Print
-    for(j=0; j<27; j++)
+    for(j=0; j<26; j++)
     {
         printf("%02X - ", newf[j]);
     }
