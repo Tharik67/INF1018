@@ -13,7 +13,11 @@ void *cria_func(void *f,DescParam params[], int n)
         int i;
         char c[4];
     }u;
-    
+
+
+    /*auxiliar para ponteiro*/
+    unsigned long var_ptr;
+
     //pushq %rbp //movq  %rsp, %rbp 
     unsigned char start[]={0x55, 0x48, 0x89, 0xe5};
     
@@ -36,6 +40,9 @@ void *cria_func(void *f,DescParam params[], int n)
     unsigned char regCall[] = {0xd7, 0xc6, 0xca}; 
 
 
+    unsigned char saveD[] = {0x12, 0x00, 0x09}; 
+
+    int shift;
     int i = 0;
     int j;
     int cont;
@@ -70,7 +77,24 @@ void *cria_func(void *f,DescParam params[], int n)
                 i++; 
             }
             
-        }
+        } else if(params[j].orig_val == IND){
+
+                newf[i] = 0x49;
+				newf[i+1] = regSave[j];
+				i+=2;
+
+				var_ptr = (unsigned long) params[j].valor.v_ptr;
+                for (aux = 0; aux<8; aux++){
+                    newf[i] = (var_ptr >> aux*8) & 0xff;
+                    i++;
+                }
+
+                newf[i] = 0x45;
+                newf[i+1] = 0x8b;
+                newf[i+2] = saveD[j];
+                i+=3;
+                
+            }
         
     }
 
