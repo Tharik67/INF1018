@@ -10,45 +10,42 @@ void libera_func (void* func) {
 
 void *cria_func(void *f,DescParam params[], int n)
 {
+    //auxiliar usado para pegar o valor do int e da chamada do call 
     union {
         int i;
         char c[4];
     }u;
 
+    //auxiliar usado para pegar o valor dos ponteiros
     union {
         unsigned long l;
         char c[8];
     }y;
 
-    unsigned long ptr_par;
-
+    unsigned char *newf = (unsigned char *)malloc(sizeof(unsigned char)*200);
+    
     //pushq %rbp //movq  %rsp, %rbp 
     unsigned char start[]={0x55, 0x48, 0x89, 0xe5};
     
     //leave //ret
     unsigned char end[]={0xc9, 0xc3};
-    
-    unsigned char *newf = (unsigned char *)malloc(sizeof(unsigned char)*200);
 
-    //função movl                          
-    //unsigned char movl[2] = {0x41, 0x89} ; 
-    // unsigned char edi[3] = {0xfc, 0xf8, 0xf9} ; 
-    // unsigned char esi[3] = {0xf4, 0xf0, 0xf1} ; 
-    // unsigned char edx[3] = {0xd4, 0xd0, 0xd1} ;    
+    //função movl do para o registrador temporario                          
     unsigned char reg[][3] = {{0xfa, 0xf8, 0xf9}, {0xf2, 0xf0, 0xf1}, {0xd2, 0xd0, 0xd1}} ; 
-
+    
+    //registradores para fazer mov
     //                        %r10d  %r8d  %r9d
     unsigned char regSave[] = {0xba, 0xb8, 0xb9 }; 
 
-    //                         %edi  %esi  %edx
+    //                          %edi  %esi  %edx
     unsigned char regCall[] = {0xd7, 0xc6, 0xca}; 
 
-
+    //vetor com instruções para salvar os ponteiros
     unsigned char saveD[] = {0x12, 0x00, 0x09}; 
 
     int i = 0;
     int j;
-    int cont;
+    int cont =0;
     int aux;
     //START
     for(j=0; j<4; j++)
@@ -60,7 +57,7 @@ void *cria_func(void *f,DescParam params[], int n)
     //edi ->  r10d
     //esi ->  r8d
     //edx ->  r9d
-    for( j = 0 ; j < n ; j++){
+    for( j = 0 ; j < n ; j++, cont++){
         if(params[j].tipo_val == INT_PAR){
 
             if(params[j].orig_val == PARAM){
@@ -69,7 +66,7 @@ void *cria_func(void *f,DescParam params[], int n)
                 newf[i+1] = 0x89;
                 newf[i+2] = reg[cont][j];
                 i+=3;
-                cont++;
+                
             }
             else if (params[j].orig_val == FIX){
                 newf[i] = 0x41;
@@ -94,8 +91,8 @@ void *cria_func(void *f,DescParam params[], int n)
                     i++;
                 }
                 
-                //mov (%r10), %r10d ou os outros registradores dependendo do n de parametro
-                newf[i] = 0x45;
+                //mov (%r10), %r10d ou os outros registradores dependendo do num de parametro
+                newf[i] = 0x45; 
                 newf[i+1] = 0x8b;
                 newf[i+2] = saveD[j];
                 i+=3;
@@ -106,11 +103,12 @@ void *cria_func(void *f,DescParam params[], int n)
         else if(params[j].tipo_val == PTR_PAR){
             
             if(params[j].orig_val == PARAM){
+                //coloca o parametro no registrador certo para chamar a funcao
                 newf[i] = 0x49;
                 newf[i+1] = 0x89;
                 newf[i+2] = reg[cont][j];
                 i+=3;
-                cont++;
+                
             }
             else if(params[j].orig_val == FIX)
 			{
@@ -137,15 +135,14 @@ void *cria_func(void *f,DescParam params[], int n)
                     i++;
                 }
                 
-                //mov (%r10), %r10d ou os outros registradores dependendo do n de parametro
-                newf[i] = 0x49;
+                //mov (%r10), %r10 ou os outros registradores dependendo do n de parametro
+                newf[i] = 0x49; 
                 newf[i+1] = 0x8b;
                 newf[i+2] = saveD[j];
                 i+=3;
 
 			}
         }
-        
     }
 
     //move para os registradores de parametros para chamar a funcao;
@@ -180,5 +177,6 @@ void *cria_func(void *f,DescParam params[], int n)
         i++;
     }
     
+
     return newf;
 }
